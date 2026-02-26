@@ -1,6 +1,11 @@
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-(async () => {
+/**
+ * Scrapes the test logs from the test cases.
+ *
+ * @returns The plain text of the test logs.
+ */
+const scrapeLogs = async () => {
     const testCaseEls = Array.from(
         document.querySelectorAll(".csub-test-name"),
     );
@@ -26,12 +31,31 @@ const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
     await sleep(500);
 
-    const testLogs = Array.from(
-        document.querySelectorAll(".csub-test-feedback > span"),
-    )
+    return Array.from(document.querySelectorAll(".csub-test-feedback > span"))
         .filter((el) => el.textContent?.trim().length > 0)
         .map((el) => el.textContent.slice(8))
         .join("\n");
+};
+
+/**
+ * Inserts text into a rich text editor.
+ *
+ * @param query The query selector of the rich text editor.
+ * @param text The text to insert.
+ */
+const insertText = (query: string, text: string) => {
+    const inputEl = document.querySelector(query) as HTMLDivElement;
+    inputEl.focus();
+
+    document.execCommand("insertText", false, text);
+};
+
+(async () => {
+    const testLogs = await scrapeLogs();
 
     console.log(testLogs);
+
+    insertText('div[contenteditable="true"][role="textbox"]', "**bold text**");
+
+    console.log("done");
 })();
