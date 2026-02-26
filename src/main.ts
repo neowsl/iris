@@ -43,11 +43,32 @@ const scrapeLogs = async () => {
  * @param query The query selector of the rich text editor.
  * @param text The text to insert.
  */
-const insertText = (query: string, text: string) => {
+const insertText = async (query: string, text: string) => {
     const inputEl = document.querySelector(query) as HTMLDivElement;
+    if (!inputEl) return;
+
     inputEl.focus();
 
-    document.execCommand("insertText", false, text);
+    const selection = window.getSelection();
+    const range = document.createRange();
+
+    const targetNode = inputEl.querySelector("p") || inputEl;
+
+    range.selectNodeContents(targetNode);
+    range.collapse(false);
+
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    targetNode.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    targetNode.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+
+    await sleep(50);
+
+    const success = document.execCommand("insertText", false, text);
+    if (success) {
+        inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+    }
 };
 
 (async () => {
@@ -55,7 +76,8 @@ const insertText = (query: string, text: string) => {
 
     console.log(testLogs);
 
-    insertText('div[contenteditable="true"][role="textbox"]', "**bold text**");
-
-    console.log("done");
+    await insertText(
+        'div[contenteditable="true"][role="textbox"]',
+        "**bold text**",
+    );
 })();
